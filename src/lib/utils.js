@@ -20,35 +20,36 @@ exports.initialiseCidrCache = function initialiseCidrCache(
 
 /**
  * @description - Extract IP address from read stream line
- * @param {string} line - A line from the read stream created from the .txt file
+ * @param {string} line - A line from the read stream created from the raw-data.txt file. Log example: {"result":{"_raw":"2024-12-17T12:51:38.347399+00:00 server router - at=info method=GET path=\"/\" host=microservice.server.com request_id=123456 fwd=\"157.52.69.103, 140.248.83.99,54.154.143.135\" dyno=web.1 connect=1ms service=122ms status=304 bytes=630 protocol=https","_time":"2024-12-17T12:51:38.347+0000","host":"system.server.com","index":"server","linecount":"1","source":"microservice","sourcetype":"server:router","log_server":"index.log-aggregator.com","tag::sourcetype":"web"}}
  * @returns {string[] | undefined} - an array of IP addresses
  */
-exports.extractIpAddressesFromSplunkData =
-	function extractIpAddressesFromSplunkData(line) {
-		const errorMessage =
-			'extractIpAddressesFromSplunkData function received invalid splunk data input';
+exports.extractIpAddressesFromRawData = function extractIpAddressesFromRawData(
+	line
+) {
+	const errorMessage =
+		'extractIpAddressesFromRawData function received invalid raw data input';
 
-		const { result } = JSON.parse(line);
+	const { result } = JSON.parse(line);
 
-		if (!result || !result._raw) {
-			console.error(errorMessage);
-			return [];
-		}
+	if (!result || !result._raw) {
+		console.error(errorMessage);
+		return [];
+	}
 
-		const { _raw } = result;
-		const rawSplunkIpAddresses = _raw.match(/fwd="([^"]*)"/);
+	const { _raw } = result;
+	const rawDataIpAddresses = _raw.match(/fwd="([^"]*)"/);
 
-		if (!rawSplunkIpAddresses) {
-			console.error(errorMessage);
-			return [];
-		}
+	if (!rawDataIpAddresses) {
+		console.error(errorMessage);
+		return [];
+	}
 
-		const foundIps = rawSplunkIpAddresses[1].match(
-			/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g
-		);
+	const foundIps = rawDataIpAddresses[1].match(
+		/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g
+	);
 
-		return foundIps ? foundIps : null;
-	};
+	return foundIps ? foundIps : null;
+};
 
 /**
  * @description - Check if an IP matches any company CIDRs in the cache

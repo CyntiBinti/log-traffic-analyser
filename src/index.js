@@ -5,7 +5,7 @@ const awsCidrs = require('./public-ip-ranges/aws-cidrs');
 const fastlyCidrs = require('./public-ip-ranges/fastly-cidrs');
 const {
 	initialiseCidrCache,
-	extractIpAddressesFromSplunkData,
+	extractIpAddressesFromRawData,
 	processCompanyLookup
 } = require('./lib/utils');
 
@@ -20,9 +20,9 @@ const batchSize = 20;
 /**
  * @description - Perform WHOIS lookup with caching
  * @param {string} filePath - An IP address to execute WHOIS lookup
- * @returns {Promise<{[key: string]: string}>} - A sorted object of companies and percentage of Heroku traffic attributed to them
+ * @returns {Promise<{[key: string]: string}>} - A sorted object of companies and percentage of log traffic attributed to them
  */
-async function herokuTrafficAnalyser(filePath) {
+async function logTrafficAnalyser(filePath) {
 	console.time('Total execution time');
 
 	if (!fs.existsSync(filePath)) {
@@ -46,7 +46,7 @@ async function herokuTrafficAnalyser(filePath) {
 
 	for await (const line of lines) {
 		eventCount++;
-		const ipAddresses = extractIpAddressesFromSplunkData(line);
+		const ipAddresses = extractIpAddressesFromRawData(line);
 
 		if (ipAddresses) {
 			ipAddresses.forEach((ip) => {
@@ -86,7 +86,7 @@ async function herokuTrafficAnalyser(filePath) {
 			return acc;
 		}, {});
 
-	console.log('\n🎉 Heroku Traffic Analyser Complete');
+	console.log('\n🎉 Log Traffic Analyser Complete');
 	console.timeEnd('Total execution time');
 	console.log('📈 Cache statistics:');
 	console.log(` - WHOIS cache entries: ${whoisIpCompanyCache.size}`);
@@ -95,10 +95,10 @@ async function herokuTrafficAnalyser(filePath) {
 	return companyPercentages;
 }
 
-const dataFilePath = path.resolve(__dirname, 'splunk-data.txt');
+const dataFilePath = path.resolve(__dirname, 'raw-data.txt');
 
 // run the analysis
-herokuTrafficAnalyser(dataFilePath).then((result) => {
+logTrafficAnalyser(dataFilePath).then((result) => {
 	console.log('\n✅ Traffic breakdown by company:');
 	console.table(result);
 });
